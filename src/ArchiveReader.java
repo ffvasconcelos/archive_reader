@@ -12,7 +12,7 @@ public class ArchiveReader {
     private String name;
     private FileInputStream file;
     private Pattern numberRegex = Pattern.compile("(^[0-9]+$)", Pattern.CASE_INSENSITIVE);
-    private Pattern idRegex = Pattern.compile("^([a-z])([0-9]|[a-z])*$", Pattern.CASE_INSENSITIVE);
+    private Pattern idRegex = Pattern.compile("^([a-z])(_)*([0-9]|[a-z])*$", Pattern.CASE_INSENSITIVE);
     private Pattern opRegex = Pattern.compile("[-+*/=&<>!.,]", Pattern.CASE_INSENSITIVE);
     private Pattern delimRegex = Pattern.compile("[(){};]", Pattern.CASE_INSENSITIVE);
     public ArchiveReader(String name) {
@@ -161,6 +161,7 @@ public class ArchiveReader {
 
         boolean foundOp = false;
         boolean foundDelim = false;
+        boolean foundAnd = false;
 
         char operator = '$';
         char delim = '$';
@@ -171,8 +172,22 @@ public class ArchiveReader {
                 delimMatcher = delimRegex.matcher("" + (char)myData);
 
                 if(opMatcher.find()) {
+
                     foundOp = true;
                     operator = (char) myData;
+
+                    if (operator == '&'){
+                        myData = this.file.read();
+                        if ((char)myData == '&'){
+                            foundAnd = true;
+                        }
+                    }
+
+                    if (operator == '.'){
+                        foundOp = false;
+                        operator = '$';
+                    }
+
                 }
 
                 if(delimMatcher.find()) {
@@ -192,35 +207,51 @@ public class ArchiveReader {
                     } else if (idMatcher.find()){
                         if (decl.contains(str)){
                             System.out.println("<decl, " + str + ">");
-                        } else if (fluxo.contains(str)) {
-                            System.out.println("<fluxo, " + str + ">");
                         } else if (tipo.contains(str)) {
                             System.out.println("<tipo, " + str + ">");
+                        } else if (fluxo.contains(str)) {
+                            System.out.println("<fluxo, " + str + ">");
                         } else {
                             System.out.println("<id, " + str + ">");
                         }
-                    }
-
-                    if(operator != '$'){
-                        System.out.println("<op, " + operator + ">");
+                    } else if (fluxo.contains(str)) {
+                        System.out.println("<fluxo, " + str + ">");
+                    } else if(operator != '$'){
+                        if (foundAnd){
+                            System.out.println("<op, &&>");
+                            foundAnd = false;
+                        } else {
+                            System.out.println("<op, " + operator + ">");
+                        }
                         operator = '$';
-                    }
-
-                    if(delim != '$'){
+                    } else if (delim != '$'){
                         System.out.println("<delim, " + delim + ">");
                         delim = '$';
+                    } else if (str.length()>0){
+                        System.out.println("<somethingElse, " + str + ">");
                     }
 
                     str = "";
                     foundOp = false;
                     foundDelim = false;
                 }
-            }
-            Matcher matcher = idRegex.matcher(str);
 
-            if(matcher.find()){
-                System.out.println("<id, " + str + " >");
             }
+
+            idMatcher = idRegex.matcher(str);
+
+            if(idMatcher.find()){
+                if (decl.contains(str)){
+                    System.out.println("<decl, " + str + ">");
+                } else if (fluxo.contains(str)) {
+                    System.out.println("<fluxo, " + str + ">");
+                } else if (tipo.contains(str)) {
+                    System.out.println("<tipo, " + str + ">");
+                } else {
+                    System.out.println("<id, " + str + ">");
+                }
+            }
+
         } catch (Exception ex) {
             System.out.println("Error reading the file");
         }
