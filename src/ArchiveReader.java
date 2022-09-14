@@ -1,3 +1,4 @@
+import javax.swing.plaf.synth.SynthTextAreaUI;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +16,8 @@ public class ArchiveReader {
     private Pattern idRegex = Pattern.compile("^([a-z])(_)*([0-9]|[a-z])*$", Pattern.CASE_INSENSITIVE);
     private Pattern opRegex = Pattern.compile("[-+*/=&<>!.,]", Pattern.CASE_INSENSITIVE);
     private Pattern delimRegex = Pattern.compile("[(){};]", Pattern.CASE_INSENSITIVE);
+    private String delimBracketsRegex = "[]";
+
     public ArchiveReader(String name) {
         this.name = name;
 
@@ -162,12 +165,14 @@ public class ArchiveReader {
         boolean foundOp = false;
         boolean foundDelim = false;
         boolean foundAnd = false;
+        boolean printed = false;
 
         char operator = '$';
         char delim = '$';
 
         try {
             while(((myData = this.file.read()) != -1)) {
+                printed = false;
                 opMatcher = opRegex.matcher("" + (char)myData);
                 delimMatcher = delimRegex.matcher("" + (char)myData);
 
@@ -180,6 +185,8 @@ public class ArchiveReader {
                         myData = this.file.read();
                         if ((char)myData == '&'){
                             foundAnd = true;
+                        } else {
+                            throw new Exception("Erro no operador And");
                         }
                     }
 
@@ -195,7 +202,12 @@ public class ArchiveReader {
                     delim = (char) myData;
                 }
 
-                if((char)myData != ' ' && (char)myData != '\n' && (char)myData != ';' && !foundOp && !foundDelim) {
+                if(delimBracketsRegex.contains("" + (char)myData)) {
+                    foundDelim = true;
+                    delim = (char) myData;
+                }
+
+                if((char)myData != ' ' && (char)myData != '\n' && !foundOp && !foundDelim) {
                     str = str + (char) myData;
                 } else {
 
@@ -204,19 +216,27 @@ public class ArchiveReader {
 
                     if(numberMatcher.find()) {
                         System.out.println("<number, " + str + ">");
+                        printed = true;
                     } else if (idMatcher.find()){
                         if (decl.contains(str)){
                             System.out.println("<decl, " + str + ">");
+                            printed = true;
                         } else if (tipo.contains(str)) {
                             System.out.println("<tipo, " + str + ">");
+                            printed = true;
                         } else if (fluxo.contains(str)) {
                             System.out.println("<fluxo, " + str + ">");
+                            printed = true;
                         } else {
                             System.out.println("<id, " + str + ">");
+                            printed = true;
                         }
                     } else if (fluxo.contains(str)) {
                         System.out.println("<fluxo, " + str + ">");
-                    } else if(operator != '$'){
+                        printed = true;
+                    }
+
+                    if(operator != '$'){
                         if (foundAnd){
                             System.out.println("<op, &&>");
                             foundAnd = false;
@@ -224,12 +244,33 @@ public class ArchiveReader {
                             System.out.println("<op, " + operator + ">");
                         }
                         operator = '$';
-                    } else if (delim != '$'){
+                    }
+
+                    if (str.length()>0 && !printed){
+                        if (str.contains("" + '.')) {
+                            if (str.charAt(0) == '.') {
+                                System.out.println("<delim, .>");
+                                System.out.println("<id, " + str.substring(1) + ">");
+                            } else if ( str.charAt(str.length()-1) == '.'){
+                                System.out.println("<id, " + str.substring(0, str.length()-1) + ">");
+                                System.out.println("<delim, .>");
+                            } else {
+                                String[] parts = str.split("\\.");
+                                System.out.println("<id, " + parts[0] + ">");
+                                System.out.println("<delim, .>");
+                                System.out.println("<id, " + parts[1] + ">");
+                            }
+                        } else {
+                            System.out.println("<id, " + str + ">");
+                        }
+                    }
+
+                    if (delim != '$'){
                         System.out.println("<delim, " + delim + ">");
                         delim = '$';
-                    } else if (str.length()>0){
-                        System.out.println("<somethingElse, " + str + ">");
                     }
+
+
 
                     str = "";
                     foundOp = false;
@@ -253,7 +294,7 @@ public class ArchiveReader {
             }
 
         } catch (Exception ex) {
-            System.out.println("Error reading the file");
+            System.out.println("Error reading the file: " + ex.toString());
         }
 
         resetFile();
