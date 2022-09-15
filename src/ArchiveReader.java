@@ -13,8 +13,8 @@ public class ArchiveReader {
     private String name;
     private FileInputStream file;
     private Pattern numberRegex = Pattern.compile("(^[0-9]+$)", Pattern.CASE_INSENSITIVE);
-    private Pattern idRegex = Pattern.compile("^([a-z])(_)*([0-9]|[a-z])*$", Pattern.CASE_INSENSITIVE);
-    private Pattern opRegex = Pattern.compile("[-+*/=&<>!.,]", Pattern.CASE_INSENSITIVE);
+    private Pattern idRegex = Pattern.compile("^([a-z]|_)([0-9]|[a-z]|_)*$", Pattern.CASE_INSENSITIVE);
+    private Pattern opRegex = Pattern.compile("[-+*=&<>!.,]", Pattern.CASE_INSENSITIVE);
     private Pattern delimRegex = Pattern.compile("[(){};]", Pattern.CASE_INSENSITIVE);
     private String delimBracketsRegex = "[]";
 
@@ -32,8 +32,8 @@ public class ArchiveReader {
         int myData;
 
         try {
-            while((myData = this.file.read()) != -1){
-                System.out.print((char)myData);
+            while ((myData = this.file.read()) != -1) {
+                System.out.print((char) myData);
             }
         } catch (Exception ex) {
             System.out.println("Error reading the file!");
@@ -53,13 +53,13 @@ public class ArchiveReader {
 
         String str = "";
         try {
-            while(((myData = this.file.read()) != -1)) {
-                if((char)myData != ' ' && (char)myData != '\n') {
+            while (((myData = this.file.read()) != -1)) {
+                if ((char) myData != ' ' && (char) myData != '\n') {
                     str = str + (char) myData;
                 } else {
                     Matcher matcher = numberRegex.matcher(str);
 
-                    if(matcher.find()){
+                    if (matcher.find()) {
                         System.out.println("<number, " + str + " >");
                     }
 
@@ -68,7 +68,7 @@ public class ArchiveReader {
             }
             Matcher matcher = numberRegex.matcher(str);
 
-            if(matcher.find()){
+            if (matcher.find()) {
                 System.out.println("<number, " + str + " >");
             }
         } catch (Exception ex) {
@@ -83,13 +83,13 @@ public class ArchiveReader {
 
         String str = "";
         try {
-            while(((myData = this.file.read()) != -1)) {
-                if((char)myData != ' ' && (char)myData != '\n' ) {
+            while (((myData = this.file.read()) != -1)) {
+                if ((char) myData != ' ' && (char) myData != '\n') {
                     str = str + (char) myData;
                 } else {
                     Matcher matcher = idRegex.matcher(str);
 
-                    if(matcher.find()){
+                    if (matcher.find()) {
                         System.out.println("<id, " + str + " >");
                     }
 
@@ -98,7 +98,7 @@ public class ArchiveReader {
             }
             Matcher matcher = idRegex.matcher(str);
 
-            if(matcher.find()){
+            if (matcher.find()) {
                 System.out.println("<id, " + str + " >");
             }
         } catch (Exception ex) {
@@ -113,13 +113,13 @@ public class ArchiveReader {
 
         String str = "";
         try {
-            while(((myData = this.file.read()) != -1)) {
-                if((char)myData != ' ' && (char)myData != '\n') {
+            while (((myData = this.file.read()) != -1)) {
+                if ((char) myData != ' ' && (char) myData != '\n') {
                     str = str + (char) myData;
                 } else {
                     Matcher matcher = opRegex.matcher(str);
 
-                    if(matcher.find()){
+                    if (matcher.find()) {
                         System.out.println("<op, " + str + " >");
                     }
 
@@ -128,7 +128,7 @@ public class ArchiveReader {
             }
             Matcher matcher = opRegex.matcher(str);
 
-            if(matcher.find()){
+            if (matcher.find()) {
                 System.out.println("<op, " + str + " >");
             }
         } catch (Exception ex) {
@@ -138,13 +138,13 @@ public class ArchiveReader {
         resetFile();
     }
 
-    public void codeAnalyser () {
+    public void codeAnalyser() {
         this.idFinder();
         this.numberFinder();
         this.opFinder();
     }
 
-    public void resetFile () {
+    public void resetFile() {
         try {
             this.file = new FileInputStream(name);
         } catch (Exception ex) {
@@ -152,7 +152,7 @@ public class ArchiveReader {
         }
     }
 
-    public void generalFinder () {
+    public void generalFinder() {
         int myData;
 
         String str = "";
@@ -171,54 +171,53 @@ public class ArchiveReader {
         char delim = '$';
 
         try {
-            while(((myData = this.file.read()) != -1)) {
+            while (((myData = this.file.read()) != -1)) {
                 printed = false;
-                opMatcher = opRegex.matcher("" + (char)myData);
-                delimMatcher = delimRegex.matcher("" + (char)myData);
+                opMatcher = opRegex.matcher("" + (char) myData);
+                delimMatcher = delimRegex.matcher("" + (char) myData);
 
-                if(opMatcher.find()) {
+                if (opMatcher.find()) {
 
                     foundOp = true;
                     operator = (char) myData;
 
-                    if (operator == '&'){
+                    if (operator == '&') {
                         myData = this.file.read();
-                        if ((char)myData == '&'){
+                        if ((char) myData == '&') {
                             foundAnd = true;
                         } else {
                             throw new Exception("Erro no operador And");
                         }
                     }
 
-                    if (operator == '.'){
+                    if (operator == '.') {
                         foundOp = false;
                         operator = '$';
                     }
 
                 }
 
-                if(delimMatcher.find()) {
+                if (delimMatcher.find()) {
                     foundDelim = true;
                     delim = (char) myData;
                 }
 
-                if(delimBracketsRegex.contains("" + (char)myData)) {
+                if (delimBracketsRegex.contains("" + (char) myData)) {
                     foundDelim = true;
                     delim = (char) myData;
                 }
 
-                if((char)myData != ' ' && (char)myData != '\n' && !foundOp && !foundDelim) {
+                if ((char) myData != ' ' && (char) myData != '\n' && !foundOp && !foundDelim) {
                     str = str + (char) myData;
                 } else {
-
                     numberMatcher = numberRegex.matcher(str);
                     idMatcher = idRegex.matcher(str);
 
-                    if(numberMatcher.find()) {
+                    if (numberMatcher.find()) {
                         System.out.println("<number, " + str + ">");
                         printed = true;
-                    } else if (idMatcher.find()){
-                        if (decl.contains(str)){
+                    } else if (idMatcher.find()) {
+                        if (decl.contains(str)) {
                             System.out.println("<decl, " + str + ">");
                             printed = true;
                         } else if (tipo.contains(str)) {
@@ -236,8 +235,8 @@ public class ArchiveReader {
                         printed = true;
                     }
 
-                    if(operator != '$'){
-                        if (foundAnd){
+                    if (operator != '$') {
+                        if (foundAnd) {
                             System.out.println("<op, &&>");
                             foundAnd = false;
                         } else {
@@ -246,13 +245,13 @@ public class ArchiveReader {
                         operator = '$';
                     }
 
-                    if (str.length()>0 && !printed){
+                    if (str.length() > 0 && !printed) {
                         if (str.contains("" + '.')) {
                             if (str.charAt(0) == '.') {
                                 System.out.println("<delim, .>");
                                 System.out.println("<id, " + str.substring(1) + ">");
-                            } else if ( str.charAt(str.length()-1) == '.'){
-                                System.out.println("<id, " + str.substring(0, str.length()-1) + ">");
+                            } else if (str.charAt(str.length() - 1) == '.') {
+                                System.out.println("<id, " + str.substring(0, str.length() - 1) + ">");
                                 System.out.println("<delim, .>");
                             } else {
                                 String[] parts = str.split("\\.");
@@ -260,44 +259,65 @@ public class ArchiveReader {
                                 System.out.println("<delim, .>");
                                 System.out.println("<id, " + parts[1] + ">");
                             }
+                        } else if (str.contains("/")) {
+                            boolean error = false;
+                            str = str + (char) myData;
+                            if (str.contains("/*")) {
+                                while (!(str.contains("*/")) && ((myData = this.file.read()) != -1)) {
+                                    str = str + (char) myData;
+                                }
+
+                                if (myData == -1) {
+                                    error = true;
+                                }
+                            } else {
+                                error = true;
+                            }
+
+                        if (error) {
+                            System.out.println("Erro no trecho: " + str);
                         } else {
-                            System.out.println("<id, " + str + ">");
+                            System.out.println("<coment, " + str + ">");
                         }
+                    } else {
+                        System.out.println("Erro no trecho: " + str);
                     }
-
-                    if (delim != '$'){
-                        System.out.println("<delim, " + delim + ">");
-                        delim = '$';
-                    }
-
-
-
-                    str = "";
-                    foundOp = false;
-                    foundDelim = false;
                 }
 
-            }
-
-            idMatcher = idRegex.matcher(str);
-
-            if(idMatcher.find()){
-                if (decl.contains(str)){
-                    System.out.println("<decl, " + str + ">");
-                } else if (fluxo.contains(str)) {
-                    System.out.println("<fluxo, " + str + ">");
-                } else if (tipo.contains(str)) {
-                    System.out.println("<tipo, " + str + ">");
-                } else {
-                    System.out.println("<id, " + str + ">");
+                if (delim != '$') {
+                    System.out.println("<delim, " + delim + ">");
+                    delim = '$';
                 }
+
+                str = "";
+                foundOp = false;
+                foundDelim = false;
             }
 
-        } catch (Exception ex) {
-            System.out.println("Error reading the file: " + ex.toString());
         }
 
-        resetFile();
+        idMatcher = idRegex.matcher(str);
+
+        if (idMatcher.find()) {
+            if (decl.contains(str)) {
+                System.out.println("<decl, " + str + ">");
+            } else if (fluxo.contains(str)) {
+                System.out.println("<fluxo, " + str + ">");
+            } else if (tipo.contains(str)) {
+                System.out.println("<tipo, " + str + ">");
+            } else {
+                System.out.println("<id, " + str + ">");
+            }
+        }
+
+    } catch(
+    Exception ex)
+
+    {
+        System.out.println("Error reading the file: " + ex.toString());
     }
+
+    resetFile();
+}
 
 }
