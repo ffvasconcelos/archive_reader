@@ -165,13 +165,14 @@ public class ArchiveReader {
         boolean foundOp = false;
         boolean foundDelim = false;
         boolean foundAnd = false;
-        boolean printed = false;
+        boolean printed;
 
         char operator = '$';
         char delim = '$';
 
         try {
             while (((myData = this.file.read()) != -1)) {
+
                 printed = false;
                 opMatcher = opRegex.matcher("" + (char) myData);
                 delimMatcher = delimRegex.matcher("" + (char) myData);
@@ -235,7 +236,7 @@ public class ArchiveReader {
                         printed = true;
                     }
 
-                    if (operator != '$') {
+                    if (operator != '$' && !str.contains("" + '/')) {
                         if (foundAnd) {
                             System.out.println("<op, &&>");
                             foundAnd = false;
@@ -255,11 +256,15 @@ public class ArchiveReader {
                                 System.out.println("<delim, .>");
                             } else {
                                 String[] parts = str.split("\\.");
-                                System.out.println("<id, " + parts[0] + ">");
-                                System.out.println("<delim, .>");
-                                System.out.println("<id, " + parts[1] + ">");
+                                for (int i = 0; i < parts.length ; i++) {
+                                    System.out.println("<id, " + parts[i] + ">");
+                                    if (i != parts.length-1) {
+                                        System.out.println("<delim, .>");
+                                    }
+                                }
                             }
                         } else if (str.contains("/")) {
+                            operator = '$';
                             boolean error = false;
                             str = str + (char) myData;
                             if (str.contains("/*")) {
